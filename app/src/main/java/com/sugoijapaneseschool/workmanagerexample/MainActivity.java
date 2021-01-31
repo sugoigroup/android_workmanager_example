@@ -38,10 +38,17 @@ public class MainActivity extends AppCompatActivity {
                 .addTag(CANCEL_ME)
                 .build();
 
+        // 이번 한번만 일하도록 한다.
+        final OneTimeWorkRequest  logWorkerRequest =  new OneTimeWorkRequest.Builder(LogWorker.class)
+                .setConstraints(constraints)
+                .addTag(CANCEL_ME)
+                .build();
+
         // 매니져에게 일할거라고 등록한다.
-        //
+        // then 으로 순차적인 workRequest를 실행할수 있다.
         WorkManager.getInstance(this)
                 .beginUniqueWork("iamUnique", ExistingWorkPolicy.APPEND_OR_REPLACE, oneTimeWorkRequest)
+                .then(logWorkerRequest)
                 .enqueue();
     }
 }
