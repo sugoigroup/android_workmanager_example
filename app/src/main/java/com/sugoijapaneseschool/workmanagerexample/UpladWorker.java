@@ -23,6 +23,9 @@ public class UpladWorker extends Worker {
     public Result doWork() {
 
         while (count < 10) {
+            if (isStopped()) {
+                continue;
+            }
             count++;
             try {
                // Log.i("worker", "now background" + count);
