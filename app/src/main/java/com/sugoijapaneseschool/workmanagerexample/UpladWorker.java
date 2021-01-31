@@ -22,7 +22,7 @@ public class UpladWorker extends Worker {
     @Override
     public Result doWork() {
 
-        while (count < 10) {
+        while (count < 3) {
             if (isStopped()) {
                 continue;
             }

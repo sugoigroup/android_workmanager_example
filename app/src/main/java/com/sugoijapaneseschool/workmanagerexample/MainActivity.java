@@ -1,16 +1,30 @@
 package com.sugoijapaneseschool.workmanagerexample;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
+
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.util.UUID;
+import java.util.concurrent.Executor;
 
 public class MainActivity extends AppCompatActivity {
     final String CANCEL_ME = "Cancel me";
+    static final String FOUND_OUT_KEY = "workerFoundoutKey";
+    static final String KEY_DETECTOR = "keyman";
+    TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TextView tv = (TextView) findViewById(R.id.hello);
+        tv = (TextView) findViewById(R.id.hello);
         tv.setOnClickListener(e -> {
             startQueue();
         });
@@ -38,9 +52,13 @@ public class MainActivity extends AppCompatActivity {
                 .addTag(CANCEL_ME)
                 .build();
 
+        //보낼값을 정하자.
+        Data whoIsTheDetector = new Data.Builder().putString(KEY_DETECTOR, "kim").build();
+
         // 이번 한번만 일하도록 한다.
         final OneTimeWorkRequest  logWorkerRequest =  new OneTimeWorkRequest.Builder(LogWorker.class)
                 .setConstraints(constraints)
+                .setInputData(whoIsTheDetector)
                 .addTag(CANCEL_ME)
                 .build();
 
@@ -50,5 +68,20 @@ public class MainActivity extends AppCompatActivity {
                 .beginUniqueWork("iamUnique", ExistingWorkPolicy.APPEND_OR_REPLACE, oneTimeWorkRequest)
                 .then(logWorkerRequest)
                 .enqueue();
+
+        // 결과를
+        foundKeyByWorkerGuy(logWorkerRequest.getId());
+    }
+
+    private void foundKeyByWorkerGuy(UUID workerUUID) {
+        LiveData<WorkInfo> lf = WorkManager.getInstance(this).getWorkInfoByIdLiveData(workerUUID);
+
+        lf.observe(this, workInfo -> {
+            if (workInfo.getOutputData().getString(FOUND_OUT_KEY) != null) {
+                tv.setText("The Key is  " + workInfo.getOutputData().getString(FOUND_OUT_KEY));
+            } else {
+                tv.setText("Finding the key");
+            }
+        });
     }
 }
